@@ -1,0 +1,32 @@
+graph TD
+    Entry[Entry Point] --> UserType{User Type Selection}
+    
+    UserType -->|Domain Expert| DE1[Welcome & Setup]
+    UserType -->|Knowledge Builder| KB1[Project Setup]
+    UserType -->|AI Enhancer| AE1[Need Identification]
+    
+    %% Domain Expert Flow
+    DE1 --> DE2[Content Upload]
+    DE2 --> DE3[Knowledge Review]
+    DE3 --> DE4[Testing & Refinement]
+    DE4 --> DE5[Practice Integration]
+    DE5 --> End[End of Demo]
+    
+    %% Knowledge Builder Flow
+    KB1 --> KB2[Advanced Content Processing]
+    KB2 --> KB3[Knowledge Engineering]
+    KB3 --> KB4[Testing & Optimization]
+    KB4 --> KB5[Marketplace Publishing]
+    KB5 --> End
+    
+    %% AI Enhancer Flow
+    AE1 --> AE2[Marketplace Browsing]
+    AE2 --> AE3[Knowledge Base Evaluation]
+    AE3 --> AE4[Purchase & Access]
+    AE4 --> AE5[Deployment Options]
+    AE5 --> End
+    
+    %% Optional path
+    DE4 -.-> DE3
+    KB4 -.-> KB3
+    AE3 -.-> AE2

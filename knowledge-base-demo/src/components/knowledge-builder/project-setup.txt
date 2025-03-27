@@ -1,0 +1,390 @@
+import React, { useState } from 'react';
+import { useDemoContext } from '../context/DemoContext';
+
+const ProjectSetup = () => {
+  const { dispatch, ACTION_TYPES } = useDemoContext();
+  
+  // State for form fields
+  const [projectDetails, setProjectDetails] = useState({
+    projectName: '',
+    domain: '',
+    description: '',
+    audience: '',
+    monetization: 'subscription',
+    pricingModel: 'tiered',
+    accessControl: 'token',
+    embeddingModel: 'default',
+    chunkingStrategy: 'semantic',
+    reranking: true,
+    attributionLevel: 'source',
+    targetUsage: 'internal',
+  });
+  
+  // Handle input change
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProjectDetails({
+      ...projectDetails,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+  };
+  
+  // Handle domain selection
+  const handleDomainSelect = (domain) => {
+    setProjectDetails({
+      ...projectDetails,
+      domain,
+    });
+    
+    // Set scenario based on domain
+    let scenario = 'default';
+    if (domain === 'healthcare') scenario = 'medical';
+    if (domain === 'legal') scenario = 'legal';
+    if (domain === 'finance') scenario = 'financial';
+    
+    dispatch({
+      type: ACTION_TYPES.SET_SCENARIO,
+      payload: scenario,
+    });
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Set project details in context
+    dispatch({
+      type: ACTION_TYPES.SET_PROJECT_DETAILS,
+      payload: projectDetails,
+    });
+    
+    // Proceed to next step
+    dispatch({ type: ACTION_TYPES.NEXT_STEP });
+  };
+  
+  return (
+    <div className="w-full max-w-6xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Project Setup</h2>
+      <p className="text-gray-600 mb-8">
+        Configure your knowledge base project with technical specifications and goals.
+      </p>
+      
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Basic Project Information */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label htmlFor="projectName" className="block text-sm font-medium text-gray-700">
+                Project Name
+              </label>
+              <input
+                type="text"
+                name="projectName"
+                id="projectName"
+                className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                value={projectDetails.projectName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            
+            <div className="sm:col-span-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                Project Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows="3"
+                className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                value={projectDetails.description}
+                onChange={handleInputChange}
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        
+        {/* Domain Selection */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Domain Selection</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Select the primary domain for your knowledge base.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              className={`border rounded-lg p-6 cursor-pointer transition-colors ${
+                projectDetails.domain === 'healthcare'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+              }`}
+              onClick={() => handleDomainSelect('healthcare')}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                  projectDetails.domain === 'healthcare' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                  </svg>
+                </div>
+                <h4 className="font-medium">Healthcare</h4>
+                <p className="text-xs text-gray-500 mt-1">
+                  Medical knowledge, procedures, treatments, diagnostics
+                </p>
+              </div>
+            </div>
+            
+            <div
+              className={`border rounded-lg p-6 cursor-pointer transition-colors ${
+                projectDetails.domain === 'legal'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+              }`}
+              onClick={() => handleDomainSelect('legal')}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                  projectDetails.domain === 'legal' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
+                  </svg>
+                </div>
+                <h4 className="font-medium">Legal</h4>
+                <p className="text-xs text-gray-500 mt-1">
+                  Laws, regulations, contracts, legal practices
+                </p>
+              </div>
+            </div>
+            
+            <div
+              className={`border rounded-lg p-6 cursor-pointer transition-colors ${
+                projectDetails.domain === 'finance'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+              }`}
+              onClick={() => handleDomainSelect('finance')}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                  projectDetails.domain === 'finance' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h4 className="font-medium">Finance</h4>
+                <p className="text-xs text-gray-500 mt-1">
+                  Investment, banking, insurance, financial planning
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Target Audience */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Target Audience</h3>
+          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label htmlFor="audience" className="block text-sm font-medium text-gray-700">
+                Who will use this knowledge base?
+              </label>
+              <select
+                id="audience"
+                name="audience"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.audience}
+                onChange={handleInputChange}
+              >
+                <option value="">Select audience</option>
+                <option value="professionals">Domain Professionals</option>
+                <option value="organizations">Organizations</option>
+                <option value="consumers">Consumers/General Public</option>
+                <option value="students">Students/Learners</option>
+                <option value="mixed">Mixed Audience</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="targetUsage" className="block text-sm font-medium text-gray-700">
+                Target Usage
+              </label>
+              <select
+                id="targetUsage"
+                name="targetUsage"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.targetUsage}
+                onChange={handleInputChange}
+              >
+                <option value="internal">Internal Use Only</option>
+                <option value="restricted">Restricted Distribution</option>
+                <option value="commercial">Commercial Distribution</option>
+                <option value="public">Public Access</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        {/* Monetization Goals */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Monetization Goals</h3>
+          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="monetization" className="block text-sm font-medium text-gray-700">
+                Monetization Strategy
+              </label>
+              <select
+                id="monetization"
+                name="monetization"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.monetization}
+                onChange={handleInputChange}
+              >
+                <option value="free">Free Access</option>
+                <option value="freemium">Freemium Model</option>
+                <option value="subscription">Subscription</option>
+                <option value="transactional">Pay Per Use</option>
+                <option value="license">License-based</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="pricingModel" className="block text-sm font-medium text-gray-700">
+                Pricing Model
+              </label>
+              <select
+                id="pricingModel"
+                name="pricingModel"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.pricingModel}
+                onChange={handleInputChange}
+              >
+                <option value="flat">Flat Rate</option>
+                <option value="tiered">Tiered Pricing</option>
+                <option value="usage">Usage-based</option>
+                <option value="custom">Custom Quotes</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        {/* Technical Configuration */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Technical Configuration</h3>
+          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="embeddingModel" className="block text-sm font-medium text-gray-700">
+                Embedding Model
+              </label>
+              <select
+                id="embeddingModel"
+                name="embeddingModel"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.embeddingModel}
+                onChange={handleInputChange}
+              >
+                <option value="default">Default (General Purpose)</option>
+                <option value="domain">Domain-Optimized</option>
+                <option value="multilingual">Multilingual</option>
+                <option value="specialized">Specialized (High Dimension)</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="chunkingStrategy" className="block text-sm font-medium text-gray-700">
+                Chunking Strategy
+              </label>
+              <select
+                id="chunkingStrategy"
+                name="chunkingStrategy"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.chunkingStrategy}
+                onChange={handleInputChange}
+              >
+                <option value="fixed">Fixed Size</option>
+                <option value="semantic">Semantic Boundaries</option>
+                <option value="hybrid">Hybrid Approach</option>
+                <option value="document">Document Structure-Based</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="accessControl" className="block text-sm font-medium text-gray-700">
+                Access Control
+              </label>
+              <select
+                id="accessControl"
+                name="accessControl"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.accessControl}
+                onChange={handleInputChange}
+              >
+                <option value="none">No Access Control</option>
+                <option value="token">API Token</option>
+                <option value="oauth">OAuth 2.0</option>
+                <option value="custom">Custom Authentication</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="attributionLevel" className="block text-sm font-medium text-gray-700">
+                Attribution Level
+              </label>
+              <select
+                id="attributionLevel"
+                name="attributionLevel"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={projectDetails.attributionLevel}
+                onChange={handleInputChange}
+              >
+                <option value="none">No Attribution</option>
+                <option value="source">Source Document</option>
+                <option value="page">Page/Section Level</option>
+                <option value="chunk">Chunk Level</option>
+              </select>
+            </div>
+            
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="reranking"
+                  name="reranking"
+                  type="checkbox"
+                  className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  checked={projectDetails.reranking}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="reranking" className="font-medium text-gray-700">Enable Reranking</label>
+                <p className="text-gray-500">Apply a cross-encoder reranking step to improve retrieval quality.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="mr-4 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={() => dispatch({ type: ACTION_TYPES.RESET_DEMO })}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Continue
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default ProjectSetup;

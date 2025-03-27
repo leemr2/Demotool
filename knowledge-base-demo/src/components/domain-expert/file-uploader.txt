@@ -1,0 +1,314 @@
+import React, { useState, useRef } from 'react';
+import { useDemoContext } from '../context/DemoContext';
+
+const FileUploader = () => {
+  const { state, dispatch, ACTION_TYPES } = useDemoContext();
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+  
+  // Mock document types and their icons
+  const documentTypes = {
+    pdf: {
+      color: 'bg-red-100',
+      textColor: 'text-red-500',
+      icon: 'document-text'
+    },
+    docx: {
+      color: 'bg-blue-100',
+      textColor: 'text-blue-500',
+      icon: 'document'
+    },
+    pptx: {
+      color: 'bg-orange-100',
+      textColor: 'text-orange-500',
+      icon: 'presentation-chart-bar'
+    },
+    xlsx: {
+      color: 'bg-green-100',
+      textColor: 'text-green-500',
+      icon: 'table'
+    },
+    txt: {
+      color: 'bg-gray-100',
+      textColor: 'text-gray-500',
+      icon: 'document-text'
+    }
+  };
+  
+  // Simulate file upload
+  const handleFileUpload = (e) => {
+    e.preventDefault();
+    const files = e.target.files || e.dataTransfer.files;
+    
+    // Process each file
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const extension = file.name.split('.').pop().toLowerCase();
+      
+      // Create a mock file object
+      const mockFile = {
+        id: `file-${Date.now()}-${i}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        extension,
+        uploadDate: new Date(),
+        status: 'uploaded',
+        progress: 100,
+        documentType: documentTypes[extension] || documentTypes.txt,
+      };
+      
+      // Add file to state
+      dispatch({
+        type: ACTION_TYPES.UPLOAD_FILE,
+        payload: mockFile
+      });
+    }
+  };
+  
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+  
+  const handleDragLeave = () => {
+    setDragActive(false);
+  };
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    handleFileUpload(e);
+  };
+  
+  const openFileSelector = () => {
+    fileInputRef.current.click();
+  };
+  
+  const handleStartProcessing = () => {
+    if (state.uploadedFiles.length === 0) return;
+    
+    dispatch({ type: ACTION_TYPES.START_PROCESSING });
+    
+    // Simulate processing progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 5;
+      dispatch({
+        type: ACTION_TYPES.UPDATE_PROCESSING_PROGRESS,
+        payload: progress
+      });
+      
+      if (progress >= 100) {
+        clearInterval(interval);
+        
+        // Generate mock knowledge map and quality metrics based on uploaded files
+        const mockKnowledgeMap = {
+          nodes: state.uploadedFiles.map((file, index) => ({
+            id: `node-${index}`,
+            label: file.name.split('.')[0],
+            type: 'document',
+            size: Math.round(file.size / 1024), // KB
+          })),
+          links: [],
+          coverage: {
+            total: 100,
+            covered: 85,
+            gaps: ['Advanced cases', 'Regulatory updates']
+          }
+        };
+        
+        const mockQualityMetrics = {
+          completeness: 85,
+          accuracy: 92,
+          relevance: 88,
+          clarity: 90,
+          overall: 89
+        };
+        
+        dispatch({
+          type: ACTION_TYPES.COMPLETE_PROCESSING,
+          payload: {
+            knowledgeMap: mockKnowledgeMap,
+            qualityMetrics: mockQualityMetrics
+          }
+        });
+        
+        // Move to next step after processing completes
+        setTimeout(() => {
+          dispatch({ type: ACTION_TYPES.NEXT_STEP });
+        }, 1000);
+      }
+    }, 200);
+  };
+  
+  return (
+    <div className="w-full max-w-6xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Upload Your Documents</h2>
+      <p className="text-gray-600 mb-8">
+        Upload your practice documents, guidelines, and protocols to create your specialized knowledge base.
+      </p>
+      
+      {/* File upload area */}
+      <div 
+        className={`border-2 border-dashed rounded-lg p-12 text-center mb-8 transition-colors
+          ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <p className="mt-4 text-lg">
+          Drag & drop your files here, or{' '}
+          <button 
+            className="text-blue-500 font-medium hover:text-blue-600 focus:outline-none"
+            onClick={openFileSelector}
+          >
+            browse
+          </button>
+        </p>
+        <p className="text-sm text-gray-500 mt-2">
+          Supported formats: PDF, DOCX, PPTX, XLSX, TXT
+        </p>
+        <input
+          type="file"
+          multiple
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+        />
+      </div>
+      
+      {/* Uploaded files list */}
+      {state.uploadedFiles.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4">Uploaded Documents</h3>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            {state.uploadedFiles.map((file) => (
+              <div key={file.id} className="flex items-center p-4 border-b last:border-b-0">
+                <div className={`w-10 h-10 rounded-lg ${file.documentType.color} flex items-center justify-center mr-4`}>
+                  <span className={`text-lg font-bold uppercase ${file.documentType.textColor}`}>
+                    {file.extension}
+                  </span>
+                </div>
+                <div className="flex-grow">
+                  <h4 className="font-medium">{file.name}</h4>
+                  <p className="text-sm text-gray-500">
+                    {Math.round(file.size / 1024)} KB • Uploaded {file.uploadDate.toLocaleTimeString()}
+                  </p>
+                </div>
+                <div>
+                  <button className="text-red-500 hover:text-red-600">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Processing status */}
+      {state.processingStatus === 'processing' && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4">Processing Documents</h3>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between mb-2">
+              <span>Processing progress</span>
+              <span>{state.processingProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${state.processingProgress}%` }}
+              ></div>
+            </div>
+            <div className="mt-6 text-sm text-gray-500">
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Analyzing document structure
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Extracting content sections
+                </li>
+                <li className="flex items-center">
+                  {state.processingProgress >= 50 ? (
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-blue-500 animate-spin mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Creating content chunks
+                </li>
+                <li className="flex items-center">
+                  {state.processingProgress >= 75 ? (
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-blue-500 animate-spin mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Generating vectorized embeddings
+                </li>
+                <li className="flex items-center">
+                  {state.processingProgress >= 90 ? (
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-blue-500 animate-spin mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Building knowledge graph
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Actions */}
+      <div className="flex justify-between">
+        <button 
+          className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          onClick={() => dispatch({ type: ACTION_TYPES.PREVIOUS_STEP })}
+        >
+          Back
+        </button>
+        
+        <button
+          className={`px-6 py-2 rounded-md transition-colors ${
+            state.uploadedFiles.length > 0 
+              ? 'bg-blue-500 text-white hover:bg-blue-600' 
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+          onClick={handleStartProcessing}
+          disabled={state.uploadedFiles.length === 0 || state.processingStatus === 'processing'}
+        >
+          {state.processingStatus === 'processing' ? 'Processing...' : 'Process Documents'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default FileUploader;

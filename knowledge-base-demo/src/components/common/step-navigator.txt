@@ -1,0 +1,129 @@
+import React from 'react';
+import { useDemoContext } from '../context/DemoContext';
+
+const StepNavigator = () => {
+  const { state, dispatch, ACTION_TYPES } = useDemoContext();
+  
+  // Define steps based on user type
+  const getSteps = () => {
+    switch (state.userType) {
+      case 'domainExpert':
+        return [
+          { id: 1, name: 'Welcome & Setup' },
+          { id: 2, name: 'Content Upload' },
+          { id: 3, name: 'Knowledge Review' },
+          { id: 4, name: 'Testing & Refinement' },
+          { id: 5, name: 'Practice Integration' },
+        ];
+      case 'knowledgeBuilder':
+        return [
+          { id: 1, name: 'Project Setup' },
+          { id: 2, name: 'Content Processing' },
+          { id: 3, name: 'Knowledge Engineering' },
+          { id: 4, name: 'Testing & Optimization' },
+          { id: 5, name: 'Marketplace Publishing' },
+        ];
+      case 'aiEnhancer':
+        return [
+          { id: 1, name: 'Need Identification' },
+          { id: 2, name: 'Marketplace Browsing' },
+          { id: 3, name: 'Knowledge Base Evaluation' },
+          { id: 4, name: 'Purchase & Access' },
+          { id: 5, name: 'Deployment Options' },
+        ];
+      default:
+        return [];
+    }
+  };
+  
+  const steps = getSteps();
+  
+  const handleStepClick = (stepId) => {
+    // Only allow clicking on completed steps or the current step
+    if (stepId <= state.currentStep) {
+      dispatch({
+        type: ACTION_TYPES.SET_CURRENT_STEP,
+        payload: stepId,
+      });
+    }
+  };
+  
+  if (steps.length === 0) {
+    return null;
+  }
+  
+  return (
+    <div className="w-full py-4">
+      <nav aria-label="Progress">
+        <ol className="flex items-center">
+          {steps.map((step, index) => (
+            <li key={step.id} className={`relative ${index !== steps.length - 1 ? 'pr-8 sm:pr-20' : ''} ${index !== 0 ? 'pl-8 sm:pl-20' : ''}`}>
+              {/* Connector line */}
+              {index !== 0 && (
+                <div 
+                  className={`absolute inset-0 flex items-center`} 
+                  aria-hidden="true"
+                >
+                  <div 
+                    className={`h-0.5 w-full ${
+                      state.currentStep >= step.id ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  ></div>
+                </div>
+              )}
+              
+              {/* Step circle */}
+              <div 
+                className={`relative flex h-8 w-8 items-center justify-center rounded-full ${
+                  state.currentStep > step.id
+                    ? 'bg-blue-600 group hover:bg-blue-800 cursor-pointer'
+                    : state.currentStep === step.id
+                    ? 'bg-blue-600 border-2 border-blue-800'
+                    : 'bg-gray-200'
+                }`}
+                onClick={() => handleStepClick(step.id)}
+              >
+                {state.currentStep > step.id ? (
+                  <svg 
+                    className="h-5 w-5 text-white" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M5 13l4 4L19 7" 
+                    />
+                  </svg>
+                ) : (
+                  <span 
+                    className={`text-sm font-semibold ${
+                      state.currentStep === step.id ? 'text-white' : 'text-gray-500'
+                    }`}
+                  >
+                    {step.id}
+                  </span>
+                )}
+              </div>
+              
+              {/* Step label */}
+              <div className="absolute top-10 text-center" style={{ left: '50%', transform: 'translateX(-50%)' }}>
+                <span 
+                  className={`text-xs font-medium ${
+                    state.currentStep >= step.id ? 'text-blue-600' : 'text-gray-500'
+                  }`}
+                >
+                  {step.name}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </div>
+  );
+};
+
+export default StepNavigator;

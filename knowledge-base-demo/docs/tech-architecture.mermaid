@@ -1,0 +1,26 @@
+flowchart TD
+    subgraph "Frontend Layer"
+        UI[User Interface] --> UF[User Flow Manager]
+        UI --> Demo[Demo Components]
+        UI --> VS[Visualization System]
+    end
+    
+    subgraph "Application Layer"
+        UF --> UC[User Context Manager]
+        Demo --> SC[Simulation Controller]
+        VS --> RC[Rendering Components]
+    end
+    
+    subgraph "Data Layer"
+        UC --> US[User Session Store]
+        SC --> SS[Simulation State]
+        SC --> DS[Demo Data Sets]
+    end
+    
+    subgraph "Integration Layer"
+        RC --> LLM[LLM API Integration]
+        SC --> LLM
+    end
+    
+    US -.-> SC
+    DS -.-> VS

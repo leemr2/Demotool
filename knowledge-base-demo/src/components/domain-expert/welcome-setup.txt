@@ -1,0 +1,282 @@
+import React, { useState } from 'react';
+import { useDemoContext } from '../context/DemoContext';
+
+const WelcomeSetup = ({ isAIEnhancer = false }) => {
+  const { state, dispatch, ACTION_TYPES } = useDemoContext();
+  
+  // States for form inputs
+  const [selectedPersona, setSelectedPersona] = useState('');
+  const [goal, setGoal] = useState('');
+  const [practiceDetails, setPracticeDetails] = useState({
+    name: '',
+    specialty: '',
+    size: '',
+    location: '',
+  });
+  
+  // Define personas based on user type
+  const personas = isAIEnhancer
+    ? [
+        { id: 'business', label: 'Business Owner', icon: 'briefcase' },
+        { id: 'manager', label: 'Department Manager', icon: 'users' },
+        { id: 'consultant', label: 'Consultant', icon: 'presentation-chart-bar' },
+        { id: 'developer', label: 'Developer', icon: 'code' },
+      ]
+    : [
+        { id: 'healthcare', label: 'Healthcare Provider', icon: 'heart' },
+        { id: 'legal', label: 'Legal Professional', icon: 'scale' },
+        { id: 'finance', label: 'Financial Advisor', icon: 'currency-dollar' },
+        { id: 'education', label: 'Educator', icon: 'academic-cap' },
+      ];
+  
+  // Handle persona selection
+  const handlePersonaSelect = (personaId) => {
+    setSelectedPersona(personaId);
+    
+    // Set scenario based on persona
+    let scenario = 'default';
+    if (personaId === 'healthcare') scenario = 'medical';
+    if (personaId === 'legal') scenario = 'legal';
+    if (personaId === 'finance') scenario = 'financial';
+    
+    dispatch({
+      type: ACTION_TYPES.SET_SCENARIO,
+      payload: scenario,
+    });
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Move to next step
+    dispatch({ type: ACTION_TYPES.NEXT_STEP });
+  };
+  
+  return (
+    <div className="w-full max-w-6xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">
+        {isAIEnhancer ? 'Identify Your AI Needs' : 'Welcome! Let\'s Set Up Your Profile'}
+      </h2>
+      <p className="text-gray-600 mb-8">
+        {isAIEnhancer
+          ? 'Tell us about your organization and what you\'re looking for in an AI solution.'
+          : 'Tell us about your practice so we can tailor the knowledge base to your needs.'}
+      </p>
+      
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Persona Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-4">
+            {isAIEnhancer ? 'What best describes your role?' : 'What type of practice do you have?'}
+          </label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {personas.map((persona) => (
+              <div
+                key={persona.id}
+                className={`border rounded-lg p-6 cursor-pointer transition-colors ${
+                  selectedPersona === persona.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                }`}
+                onClick={() => handlePersonaSelect(persona.id)}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                    selectedPersona === persona.id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {persona.icon === 'briefcase' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'users' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'presentation-chart-bar' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'code' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'heart' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'scale' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'currency-dollar' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    )}
+                    {persona.icon === 'academic-cap' && (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                        <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                      </svg>
+                    )}
+                  </div>
+                  <h3 className="font-medium">{persona.label}</h3>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Goal Setting */}
+        <div>
+          <label htmlFor="goal" className="block text-sm font-medium text-gray-700 mb-1">
+            {isAIEnhancer 
+              ? 'What do you want your AI solution to help with?' 
+              : 'What would you like your AI assistant to help with?'}
+          </label>
+          <textarea
+            id="goal"
+            rows="3"
+            className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+            placeholder={isAIEnhancer
+              ? "e.g., Answer customer questions, Process documents, Automate repetitive tasks..."
+              : "e.g., Answer patient questions, Explain procedures, Provide reference information..."}
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          ></textarea>
+        </div>
+        
+        {/* Practice/Organization Details (conditional based on user type) */}
+        {!isAIEnhancer && (
+          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="practice-name" className="block text-sm font-medium text-gray-700">
+                Practice Name
+              </label>
+              <input
+                type="text"
+                id="practice-name"
+                className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                value={practiceDetails.name}
+                onChange={(e) => setPracticeDetails({...practiceDetails, name: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="specialty" className="block text-sm font-medium text-gray-700">
+                Specialty/Focus
+              </label>
+              <input
+                type="text"
+                id="specialty"
+                className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                value={practiceDetails.specialty}
+                onChange={(e) => setPracticeDetails({...practiceDetails, specialty: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="size" className="block text-sm font-medium text-gray-700">
+                Practice Size
+              </label>
+              <select
+                id="size"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={practiceDetails.size}
+                onChange={(e) => setPracticeDetails({...practiceDetails, size: e.target.value})}
+              >
+                <option value="">Select size</option>
+                <option value="solo">Solo Practitioner</option>
+                <option value="small">Small (2-5 professionals)</option>
+                <option value="medium">Medium (6-20 professionals)</option>
+                <option value="large">Large (21+ professionals)</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                Primary Location
+              </label>
+              <input
+                type="text"
+                id="location"
+                className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                placeholder="City, State"
+                value={practiceDetails.location}
+                onChange={(e) => setPracticeDetails({...practiceDetails, location: e.target.value})}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Budget and Timeline (for AI Enhancer) */}
+        {isAIEnhancer && (
+          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="budget" className="block text-sm font-medium text-gray-700">
+                Budget Range
+              </label>
+              <select
+                id="budget"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">Select budget range</option>
+                <option value="low">$0 - $500</option>
+                <option value="medium">$500 - $2,000</option>
+                <option value="high">$2,000 - $10,000</option>
+                <option value="enterprise">$10,000+</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="timeline" className="block text-sm font-medium text-gray-700">
+                Implementation Timeline
+              </label>
+              <select
+                id="timeline"
+                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">Select timeline</option>
+                <option value="immediate">Immediate (within days)</option>
+                <option value="soon">Soon (within weeks)</option>
+                <option value="quarter">This quarter</option>
+                <option value="future">Future planning</option>
+              </select>
+            </div>
+          </div>
+        )}
+        
+        {/* Action Buttons */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="mr-4 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={() => dispatch({ type: ACTION_TYPES.RESET_DEMO })}
+          >
+            Back
+          </button>
+          <button
+            type="submit"
+            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+              selectedPersona ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+            disabled={!selectedPersona}
+          >
+            Continue
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default WelcomeSetup;

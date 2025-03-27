@@ -1,0 +1,474 @@
+import React, { useState } from 'react';
+import { useDemoContext } from '../context/DemoContext';
+
+const PurchaseConfig = () => {
+  const { state, dispatch, ACTION_TYPES } = useDemoContext();
+  
+  // State for form inputs
+  const [purchaseDetails, setPurchaseDetails] = useState({
+    plan: 'annual',
+    billingCycle: 'annual',
+    paymentMethod: 'credit',
+    accessLevel: 'standard',
+    queries: '500k',
+    integrationSupport: false,
+    prioritySupport: false,
+    dataStorage: false,
+  });
+  
+  // Calculate total price based on selected options
+  const calculatePrice = () => {
+    if (!state.selectedKnowledgeBase) return 0;
+    
+    let basePrice = 0;
+    
+    // Base price based on plan
+    if (purchaseDetails.plan === 'monthly') {
+      basePrice = state.selectedKnowledgeBase.price.monthly;
+    } else if (purchaseDetails.plan === 'annual') {
+      basePrice = state.selectedKnowledgeBase.price.annual;
+    } else if (purchaseDetails.plan === 'onetime') {
+      basePrice = state.selectedKnowledgeBase.price.oneTime;
+    }
+    
+    // Add-ons
+    const addOns = 
+      (purchaseDetails.integrationSupport ? 199 : 0) +
+      (purchaseDetails.prioritySupport ? 99 : 0) +
+      (purchaseDetails.dataStorage ? 149 : 0);
+    
+    // If annual billing, show monthly price but note annual billing
+    const displayPrice = purchaseDetails.plan === 'annual' && purchaseDetails.billingCycle === 'monthly'
+      ? Math.round(basePrice / 12)
+      : basePrice;
+    
+    // Monthly add-ons should be reduced for annual payments
+    const displayAddOns = purchaseDetails.plan !== 'onetime' && purchaseDetails.billingCycle === 'annual'
+      ? addOns * 10  // Annual price (roughly 10 months worth)
+      : addOns;
+      
+    return {
+      basePrice: displayPrice,
+      addOns: displayAddOns,
+      total: displayPrice + displayAddOns,
+      billingCycle: purchaseDetails.billingCycle,
+      isOneTime: purchaseDetails.plan === 'onetime'
+    };
+  };
+  
+  // Handle input change
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setPurchaseDetails({
+      ...purchaseDetails,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+  };
+  
+  // Handle plan selection
+  const handlePlanSelect = (plan) => {
+    // Set both plan and billing cycle
+    if (plan === 'onetime') {
+      setPurchaseDetails({
+        ...purchaseDetails,
+        plan,
+        billingCycle: 'onetime'
+      });
+    } else {
+      setPurchaseDetails({
+        ...purchaseDetails,
+        plan,
+        billingCycle: plan === 'monthly' ? 'monthly' : purchaseDetails.billingCycle
+      });
+    }
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Set purchase details in context
+    dispatch({
+      type: ACTION_TYPES.SET_PURCHASE_DETAILS,
+      payload: {
+        ...purchaseDetails,
+        price: calculatePrice()
+      },
+    });
+    
+    // Proceed to next step
+    dispatch({ type: ACTION_TYPES.NEXT_STEP });
+  };
+  
+  // Calculate price for display
+  const price = calculatePrice();
+  
+  // If no knowledge base is selected, redirect to marketplace
+  if (!state.selectedKnowledgeBase) {
+    return (
+      <div className="w-full max-w-6xl mx-auto p-6 text-center">
+        <p className="text-gray-600 mb-4">
+          No knowledge base selected. Please select a knowledge base from the marketplace.
+        </p>
+        <button
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onClick={() => dispatch({ type: ACTION_TYPES.SET_CURRENT_STEP, payload: 2 })}
+        >
+          Go to Marketplace
+        </button>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="w-full max-w-7xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Configure Your Purchase</h2>
+      <p className="text-gray-600 mb-8">
+        Customize your knowledge base purchase options based on your needs.
+      </p>
+      
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-2/3">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Plan Selection */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Select a Plan</h3>
+              
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                    purchaseDetails.plan === 'monthly'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                  }`}
+                  onClick={() => handlePlanSelect('monthly')}
+                >
+                  <div className="flex flex-col h-full">
+                    <h4 className="font-medium text-gray-900">Monthly Plan</h4>
+                    <p className="text-sm text-gray-500 mb-2">Billed monthly, cancel anytime</p>
+                    <div className="mt-auto pt-4 border-t border-gray-200">
+                      <span className="text-2xl font-bold text-gray-900">${state.selectedKnowledgeBase.price.monthly}</span>
+                      <span className="text-sm text-gray-500">/month</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                    purchaseDetails.plan === 'annual'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                  }`}
+                  onClick={() => handlePlanSelect('annual')}
+                >
+                  <div className="flex flex-col h-full">
+                    <h4 className="font-medium text-gray-900">Annual Plan</h4>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Save {Math.round((1 - (state.selectedKnowledgeBase.price.annual / (state.selectedKnowledgeBase.price.monthly * 12))) * 100)}% with annual billing
+                    </p>
+                    <div className="mt-auto pt-4 border-t border-gray-200">
+                      <span className="text-2xl font-bold text-gray-900">${Math.round(state.selectedKnowledgeBase.price.annual / 12)}</span>
+                      <span className="text-sm text-gray-500">/month</span>
+                      <p className="text-xs text-gray-500">Billed annually (${state.selectedKnowledgeBase.price.annual})</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                    purchaseDetails.plan === 'onetime'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                  }`}
+                  onClick={() => handlePlanSelect('onetime')}
+                >
+                  <div className="flex flex-col h-full">
+                    <h4 className="font-medium text-gray-900">One-Time Purchase</h4>
+                    <p className="text-sm text-gray-500 mb-2">No recurring charges</p>
+                    <div className="mt-auto pt-4 border-t border-gray-200">
+                      <span className="text-2xl font-bold text-gray-900">${state.selectedKnowledgeBase.price.oneTime}</span>
+                      <p className="text-xs text-gray-500">One-time payment</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Billing cycle selection (only for subscription plans) */}
+              {purchaseDetails.plan !== 'onetime' && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Billing Cycle</h4>
+                  <div className="flex items-center space-x-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="billingCycle"
+                        value="monthly"
+                        checked={purchaseDetails.billingCycle === 'monthly'}
+                        onChange={handleInputChange}
+                        className="form-radio h-4 w-4 text-blue-600"
+                        disabled={purchaseDetails.plan === 'monthly'}
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Monthly</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="billingCycle"
+                        value="annual"
+                        checked={purchaseDetails.billingCycle === 'annual'}
+                        onChange={handleInputChange}
+                        className="form-radio h-4 w-4 text-blue-600"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Annual</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Access Options */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Access Options</h3>
+              
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="accessLevel" className="block text-sm font-medium text-gray-700">
+                    Access Level
+                  </label>
+                  <select
+                    id="accessLevel"
+                    name="accessLevel"
+                    className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={purchaseDetails.accessLevel}
+                    onChange={handleInputChange}
+                  >
+                    <option value="basic">Basic Access</option>
+                    <option value="standard">Standard Access</option>
+                    <option value="premium">Premium Access</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label htmlFor="queries" className="block text-sm font-medium text-gray-700">
+                    Monthly Query Limit
+                  </label>
+                  <select
+                    id="queries"
+                    name="queries"
+                    className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={purchaseDetails.queries}
+                    onChange={handleInputChange}
+                  >
+                    <option value="100k">100,000 queries/month</option>
+                    <option value="500k">500,000 queries/month</option>
+                    <option value="1m">1 million queries/month</option>
+                    <option value="unlimited">Unlimited queries</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Add-on Services */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Add-on Services</h3>
+              
+              <div className="space-y-4">
+                <div className="relative flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="integrationSupport"
+                      name="integrationSupport"
+                      type="checkbox"
+                      className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      checked={purchaseDetails.integrationSupport}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label htmlFor="integrationSupport" className="font-medium text-gray-700">
+                      Integration Support
+                    </label>
+                    <p className="text-gray-500">
+                      Get assistance with integrating the knowledge base into your systems.
+                      <span className="ml-2 text-gray-900 font-medium">
+                        +$199{purchaseDetails.plan !== 'onetime' ? '/month' : ''}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="relative flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="prioritySupport"
+                      name="prioritySupport"
+                      type="checkbox"
+                      className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      checked={purchaseDetails.prioritySupport}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label htmlFor="prioritySupport" className="font-medium text-gray-700">
+                      Priority Support
+                    </label>
+                    <p className="text-gray-500">
+                      Get faster response times and dedicated support.
+                      <span className="ml-2 text-gray-900 font-medium">
+                        +$99{purchaseDetails.plan !== 'onetime' ? '/month' : ''}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="relative flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="dataStorage"
+                      name="dataStorage"
+                      type="checkbox"
+                      className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      checked={purchaseDetails.dataStorage}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label htmlFor="dataStorage" className="font-medium text-gray-700">
+                      Advanced Data Storage & Analytics
+                    </label>
+                    <p className="text-gray-500">
+                      Store query history and get usage analytics.
+                      <span className="ml-2 text-gray-900 font-medium">
+                        +$149{purchaseDetails.plan !== 'onetime' ? '/month' : ''}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Payment Information */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Method
+                </label>
+                <div className="flex space-x-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="credit"
+                      checked={purchaseDetails.paymentMethod === 'credit'}
+                      onChange={handleInputChange}
+                      className="form-radio h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Credit Card</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="invoice"
+                      checked={purchaseDetails.paymentMethod === 'invoice'}
+                      onChange={handleInputChange}
+                      className="form-radio h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Invoice</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Demo purpose - not implementing actual payment forms */}
+              <div className="border border-dashed border-gray-300 rounded-md p-4 bg-gray-50">
+                <p className="text-sm text-gray-500 text-center">
+                  This is a demonstration. No actual payment will be processed.
+                </p>
+              </div>
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex justify-between">
+              <button
+                type="button"
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={() => dispatch({ type: ACTION_TYPES.PREVIOUS_STEP })}
+              >
+                Back
+              </button>
+              
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Proceed to Deployment
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        {/* Order Summary */}
+        <div className="lg:w-1/3">
+          <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h3>
+            
+            <div className="mb-4">
+              <h4 className="font-medium text-gray-900">{state.selectedKnowledgeBase.title}</h4>
+              <p className="text-sm text-gray-500">by {state.selectedKnowledgeBase.publisher}</p>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-4 mb-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-500">Base Price</span>
+                <span className="text-sm font-medium text-gray-900">
+                  ${price.basePrice}{price.isOneTime ? '' : `/${price.billingCycle === 'annual' ? 'year' : 'month'}`}
+                </span>
+              </div>
+              
+              {price.addOns > 0 && (
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-gray-500">Add-ons</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    +${price.addOns}{price.isOneTime ? '' : `/${price.billingCycle === 'annual' ? 'year' : 'month'}`}
+                  </span>
+                </div>
+              )}
+              
+              <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between">
+                <span className="text-base font-medium text-gray-900">Total</span>
+                <span className="text-base font-medium text-gray-900">
+                  ${price.total}{price.isOneTime ? '' : `/${price.billingCycle === 'annual' ? 'year' : 'month'}`}
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 rounded-md p-4 text-sm text-blue-700">
+              <p className="font-medium mb-1">Selected Plan:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  {purchaseDetails.plan === 'monthly' && 'Monthly Subscription'}
+                  {purchaseDetails.plan === 'annual' && 'Annual Subscription'}
+                  {purchaseDetails.plan === 'onetime' && 'One-Time Purchase'}
+                </li>
+                <li>{purchaseDetails.accessLevel === 'basic' && 'Basic Access'}
+                   {purchaseDetails.accessLevel === 'standard' && 'Standard Access'}
+                   {purchaseDetails.accessLevel === 'premium' && 'Premium Access'}</li>
+                <li>{purchaseDetails.queries === '100k' && '100,000 queries/month'}
+                   {purchaseDetails.queries === '500k' && '500,000 queries/month'}
+                   {purchaseDetails.queries === '1m' && '1 million queries/month'}
+                   {purchaseDetails.queries === 'unlimited' && 'Unlimited queries'}</li>
+                {purchaseDetails.integrationSupport && <li>Integration Support</li>}
+                {purchaseDetails.prioritySupport && <li>Priority Support</li>}
+                {purchaseDetails.dataStorage && <li>Advanced Data Storage & Analytics</li>}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PurchaseConfig;
